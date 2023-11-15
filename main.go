@@ -18,7 +18,7 @@ func main() {
 
 	defer archivoUsuarios.Close()
 
-	listaUsuarios := procesarUsuarios(archivoUsuarios)
+	usuariosTotales := procesarUsuarios(archivoUsuarios)
 	usuarioLoggeado := ""
 
 	terminal := bufio.NewScanner(os.Stdin)
@@ -39,7 +39,7 @@ func main() {
 		switch cmd {
 		case "login": //O(1) hacerlo con diccionarios
 
-			err := validarUsuario(datoTerminal, listaUsuarios)
+			err := validarUsuario(datoTerminal, usuariosTotales)
 
 			if err != nil {
 				fmt.Println(err)
@@ -83,26 +83,24 @@ func leerUsuarios() (*os.File, error) {
 	return usuarios, nil
 }
 
-func procesarUsuarios(archivo *os.File) []string {
+func procesarUsuarios(archivo *os.File) map[string]string {
 	defer archivo.Close()
 
-	usuarios := make([]string, 0)
+	usuarios := make(map[string]string)
 
 	lineas := bufio.NewScanner(archivo)
 
 	for lineas.Scan() {
 		linea := lineas.Text()
-		usuarios = append(usuarios, linea)
+		usuarios[linea] = ""
 	}
 
 	return usuarios
 }
 
-func validarUsuario(usuario string, listaUsuarios []string) error {
-	for user := range listaUsuarios {
-		if listaUsuarios[user] == usuario {
-			return errores.ErrorUsuarioLoggeado{}
-		}
+func validarUsuario(usuario string, listaUsuarios map[string]string) error {
+	if listaUsuarios[usuario] != "" {
+		return errores.ErrorUsuarioInexistente{}
 	}
 	return nil
 }
