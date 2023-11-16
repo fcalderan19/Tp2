@@ -1,6 +1,7 @@
 package Algogram
 
 import (
+	"fmt"
 	heap "tdas/cola_prioridad"
 	hash "tdas/diccionario"
 	errores "tp2/errores"
@@ -10,7 +11,7 @@ type post struct {
 	id        int
 	user      string
 	contenido string
-	likes     []Usuario
+	likes     []string
 }
 
 type usuario struct {
@@ -34,10 +35,10 @@ type Post interface {
 
 	VerContenido() string
 
-	VerLikes() []Usuario
+	VerLikes() []string
 }
 
-func CrearPost(id int, user, contenido string, likes []Usuario) Post {
+func CrearPost(id int, user, contenido string, likes []string) Post {
 	return &post{id: id, user: user, contenido: contenido, likes: likes}
 }
 
@@ -53,7 +54,7 @@ func (p post) VerContenido() string {
 	return p.contenido
 }
 
-func (p post) VerLikes() []Usuario {
+func (p post) VerLikes() []string {
 	return p.likes
 }
 
@@ -105,17 +106,20 @@ type Sistema interface {
 	PublicarPost(Post) error
 
 	//Dado un post actual, likea. Si no hay post, error
-	LikearPost(int, Post) error
+	LikearPost(int) error
 
 	//Muestra la cantidad de likes que tiene la publicacion x del usuario. Si no hay publicacion, error
-	MostrarLikes(int, Post) error
+	MostrarLikes(int) error
 }
 
 func (system sistema) Loguearse(user string) error {
 	if !system.usuariosTotales.Pertenece(user) {
 		return errores.ErrorUsuarioInexistente{}
+	} else if system.usuarioLogeado != "" {
+		return errores.ErrorUsuarioLoggeado{}
 	}
 	system.usuarioLogeado = user
+	fmt.Println("Hola ", user)
 	return nil
 }
 
@@ -123,9 +127,30 @@ func (system sistema) Desloggearse() error {
 	if system.usuarioLogeado == "" {
 		return errores.ErrorUsuarioNoLoggeado{}
 	}
+	system.usuarioLogeado = ""
+	fmt.Println("Adios")
 	return nil
 }
 
-func (system sistema) PublicarPost(postNuevo Post) error {
+func (system sistema) PublicarPost(id int, postNuevo Post) error {
+	if system.usuarioLogeado == "" {
+		return errores.ErrorUsuarioNoLoggeado{}
+	}
+	system.postsTotales.Guardar(id, postNuevo)
+	fmt.Println("Post publicado")
+	return nil
+}
 
+func (system sistema) LikearPost(id int) error {
+	if system.usuarioLogeado == "" {
+		return errores.ErrorUsuarioNoLoggeado{}
+	}
+
+	post := system.postsTotales.Obtener(id) //esto devolveria panic, hacerlo con un iterador
+	user := system.usuarioLogeado
+
+	likes := post.VerLikes()
+	likes = append(likes, user)
+
+	return nil
 }
