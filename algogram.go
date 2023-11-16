@@ -1,7 +1,9 @@
 package Algogram
 
 import (
-	TDA "tdas/cola_prioridad"
+	heap "tdas/cola_prioridad"
+	hash "tdas/diccionario"
+	errores "tp2/errores"
 )
 
 type post struct {
@@ -15,7 +17,13 @@ type usuario struct {
 	username string
 	afinidad int
 	cmp      func(a, b *Post) int
-	feed     TDA.ColaPrioridad[*Post] //Hago heap de minimos por afinidad y desencolo (desencolaria el primero que es el que menos valor de afinidad tiene)
+	feed     heap.ColaPrioridad[*Post] //Hago heap de minimos por afinidad y desencolo (desencolaria el primero que es el que menos valor de afinidad tiene)
+}
+
+type sistema struct {
+	usuariosTotales hash.Diccionario[string, Usuario]
+	postsTotales    hash.Diccionario[int, Post]
+	usuarioLogeado  string
 }
 
 // Posts
@@ -55,7 +63,7 @@ type Usuario interface {
 
 	VerAfinidad() int
 
-	VerFeed() TDA.ColaPrioridad[*Post]
+	VerFeed() heap.ColaPrioridad[*Post]
 
 	VerUsername() string
 }
@@ -65,7 +73,7 @@ func CrearUsuario(username string, afinidad int, cmp func(a *Post, b *Post) int)
 	usuario.username = username
 	usuario.afinidad = afinidad
 	usuario.cmp = cmp
-	usuario.feed = TDA.CrearHeap[*Post](cmp)
+	usuario.feed = heap.CrearHeap[*Post](cmp)
 	return usuario
 }
 
@@ -77,7 +85,7 @@ func (user usuario) VerAfinidad() int {
 	return user.afinidad
 }
 
-func (user usuario) VerFeed() TDA.ColaPrioridad[*Post] {
+func (user usuario) VerFeed() heap.ColaPrioridad[*Post] {
 	return user.feed
 }
 
@@ -85,7 +93,7 @@ func (user usuario) VerProximoPost() *Post {
 	return user.feed.Desencolar()
 }
 
-type Algogram interface {
+type Sistema interface {
 
 	//Dado un usuario, este ingresa al sistema. Si ya hay alguien adentro, error
 	Loguearse(string) error
@@ -101,4 +109,23 @@ type Algogram interface {
 
 	//Muestra la cantidad de likes que tiene la publicacion x del usuario. Si no hay publicacion, error
 	MostrarLikes(int, Post) error
+}
+
+func (system sistema) Loguearse(user string) error {
+	if !system.usuariosTotales.Pertenece(user) {
+		return errores.ErrorUsuarioInexistente{}
+	}
+	system.usuarioLogeado = user
+	return nil
+}
+
+func (system sistema) Desloggearse() error {
+	if system.usuarioLogeado == "" {
+		return errores.ErrorUsuarioNoLoggeado{}
+	}
+	return nil
+}
+
+func (system sistema) PublicarPost(postNuevo Post) error {
+
 }
