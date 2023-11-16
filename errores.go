@@ -29,3 +29,21 @@ type ErrorUsuarioNoLoggeado struct{}
 func (e ErrorUsuarioNoLoggeado) Error() string {
 	return "Error: no habia usuario loggeado"
 }
+
+type ErrorFinFeed struct{}
+
+func (e ErrorFinFeed) Error() string {
+	return "Error: Usuario no loggeado o no hay mas posts para ver"
+}
+
+type ErrorLikearPost struct{}
+
+func (e ErrorLikearPost) Error() string {
+	return "Error: Usuario no loggeado o Post inexistente"
+}
+
+type ErrorMostrarLike struct{}
+
+func (e ErrorMostrarLike) Error() string {
+	return "Error: Post inexistente o sin likes"
+}

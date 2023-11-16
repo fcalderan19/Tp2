@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"tp2/errores"
+	sistema "tp2/algogram"
+	errores "tp2/errores"
 )
 
 func main() {
@@ -18,8 +19,9 @@ func main() {
 
 	defer archivoUsuarios.Close()
 
-	usuariosTotales := procesarUsuarios(archivoUsuarios)
-	usuarioLoggeado := ""
+	algogram := procesarUsuarios(archivoUsuarios)
+
+	IDpost := 0
 
 	terminal := bufio.NewScanner(os.Stdin)
 
@@ -39,37 +41,41 @@ func main() {
 		switch cmd {
 		case "login": //O(1) hacerlo con diccionarios
 
-			err := validarUsuario(datoTerminal, usuariosTotales)
+			err := algogram.Loguearse(datoTerminal)
 
 			if err != nil {
 				fmt.Println(err)
-				return
+				continue
 			}
-
-			if usuarioLoggeado != "" {
-				fmt.Println(errores.ErrorUsuarioLoggeado{})
-				return
-			}
-
-			fmt.Println("Hola", datoTerminal)
-			usuarioLoggeado = datoTerminal
 
 		case "logout":
-			if usuarioLoggeado == "" {
-				fmt.Println(errores.ErrorUsuarioNoLoggeado{})
-				return
-			}
-			println("Adios")
-			usuarioLoggeado = ""
-		}
+			err := algogram.Desloggearse()
 
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+		case "publicar":
+			likes := make([]string, 0)
+			postNuevo := sistema.CrearPost(IDpost, algogram.UsuarioLoggeado(), datoTerminal, likes)
+			err := algogram.PublicarPost(IDpost, postNuevo)
+
+			if err != nil {
+				fmt.Print(err)
+				continue
+			}
+
+			IDpost++
+		}
 	}
+
 }
 
 func leerUsuarios() (*os.File, error) {
 	params := os.Args[1:]
 
-	if len(params) != 2 {
+	if len(params) != 1 {
 		return nil, errores.ErrorParametros{}
 	}
 
@@ -83,24 +89,30 @@ func leerUsuarios() (*os.File, error) {
 	return usuarios, nil
 }
 
-func procesarUsuarios(archivo *os.File) map[string]string {
+func procesarUsuarios(archivo *os.File) sistema.Sistema {
 	defer archivo.Close()
 
-	usuarios := make(map[string]string)
+	system := sistema.CrearSistema()
+	usuarios := system.UsuariosTotales()
 
 	lineas := bufio.NewScanner(archivo)
+	afinidad := 0
 
 	for lineas.Scan() {
 		linea := lineas.Text()
-		usuarios[linea] = ""
+		afinidad++
+		user := sistema.CrearUsuario(linea, afinidad, sistema.Cmp)
+		usuarios.Guardar(linea, user)
 	}
 
-	return usuarios
+	return system
 }
 
-func validarUsuario(usuario string, listaUsuarios map[string]string) error {
-	if listaUsuarios[usuario] != "" {
+/*
+func validarUsuario(usuario string, listaUsuarios TDA.Diccionario[string, sistema.Usuario]) error {
+	if !listaUsuarios.Pertenece(usuario) {
 		return errores.ErrorUsuarioInexistente{}
 	}
 	return nil
 }
+*/
